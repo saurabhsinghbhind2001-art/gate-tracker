@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GATE CE 2027 Tracker</title>
+<meta name="description" content="Day-by-day GATE Civil 2027 study tracker that works offline.">
+<meta name="theme-color" content="#1f5fa8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="GATE CE">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+/* Layout: a drafting-sheet study log — title block header, tabbed sheets below, each a ruled table or checklist. */
+:root{
+  --bg:#f3f5f7; --paper:#ffffff; --ink:#18222d; --muted:#5b6876; --line:#d9dfe5; --line2:#eef1f4;
+  --accent:#1f5fa8; --accent-soft:#e3ecf8; --today:#fff4c7; --today-line:#e2b72a;
+  --good:#2f7d4f; --good-soft:#e2f2e8; --warn:#a8641a; --warn-soft:#fbeedd; --bad:#b03a3a;
+  --f-display:"Bahnschrift SemiCondensed","Bahnschrift","Barlow Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-mono:Consolas,"Cascadia Mono",ui-monospace,Menlo,"DejaVu Sans Mono",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --paper:#161d25; --ink:#e4e9ee; --muted:#93a1ae; --line:#2a3542; --line2:#1d2630;
+  --accent:#6ea5e8; --accent-soft:#1c2b3d; --today:#3a3214; --today-line:#c9a227;
+  --good:#5cc187; --good-soft:#173024; --warn:#e3a35a; --warn-soft:#33261a; --bad:#e57b7b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --paper:#161d25; --ink:#e4e9ee; --muted:#93a1ae; --line:#2a3542; --line2:#1d2630;
+  --accent:#6ea5e8; --accent-soft:#1c2b3d; --today:#3a3214; --today-line:#c9a227;
+  --good:#5cc187; --good-soft:#173024; --warn:#e3a35a; --warn-soft:#33261a; --bad:#e57b7b; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:2.1rem;line-height:1.05}
+h2{font-size:1.45rem}
+h3{font-size:1.15rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+/* title block */
+.tb{background:var(--paper);border:1.5px solid var(--ink);display:grid;grid-template-columns:2fr repeat(4,1fr)}
+.tb>div{padding:12px 14px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:2px;min-width:0}
+.tb>div:first-child{border-left:0}
+.tb .big{font-family:var(--f-mono);font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums}
+.tb .sub{font-size:.8rem;color:var(--muted)}
+.sync{font-size:.78rem;color:var(--muted)}
+.sync b{color:var(--good)}
+@media (max-width:760px){.tb{grid-template-columns:1fr 1fr}.tb>div:first-child{grid-column:1/-1}.tb>div{border-left:0;border-top:1px solid var(--line)}.tb>div:nth-child(odd):not(:first-child){border-left:1px solid var(--line)}}
+/* bars */
+.bar{height:6px;background:var(--line2);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+/* tabs */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink)}
+.tabs button{font:600 .95rem var(--f-body);background:transparent;color:var(--muted);border:1px solid transparent;border-bottom:0;padding:8px 14px;cursor:pointer;border-radius:4px 4px 0 0;margin-bottom:-1.5px}
+.tabs button[aria-selected="true"]{background:var(--paper);color:var(--ink);border-color:var(--ink);border-bottom:1.5px solid var(--paper)}
+.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sheet{background:var(--paper);border:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:16px}
+/* today card */
+.today{border:1.5px solid var(--today-line);background:var(--today);padding:16px;display:flex;flex-direction:column;gap:8px}
+.today .task{font-size:1.15rem;font-weight:700}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.steps div{background:var(--paper);border:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.steps .t{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);font-weight:600}
+@media (max-width:700px){.steps{grid-template-columns:1fr 1fr}}
+/* phases */
+.phases{display:grid;grid-template-columns:11fr 3fr 1.6fr;gap:4px}
+.phases div{padding:8px 10px;background:var(--accent-soft);border-top:3px solid var(--accent);min-width:0}
+.phases div:nth-child(2){border-top-color:var(--warn);background:var(--warn-soft)}
+.phases div:nth-child(3){border-top-color:var(--bad);background:var(--warn-soft)}
+.phases b{display:block;font-family:var(--f-display);font-size:1.05rem}
+.phases span{font-size:.78rem;color:var(--muted)}
+@media (max-width:600px){.phases{grid-template-columns:1fr}}
+/* plan table */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1.5px solid var(--ink);font-weight:600}
+td{padding:8px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr.week td{background:var(--bg);font-family:var(--f-display);font-weight:600;font-size:1rem;padding:6px 8px;border-bottom:1px solid var(--line)}
+tr.is-today td{background:var(--today)}
+tr.is-done td.task{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+td.date{white-space:nowrap;font-family:var(--f-mono);font-size:.82rem}
+td.task b{display:block}
+td.task small{display:block;color:var(--muted);font-size:.82rem}
+.pill{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 7px;border-radius:10px;white-space:nowrap}
+.p-study{background:var(--accent-soft);color:var(--accent)}
+.p-test{background:var(--warn-soft);color:var(--warn)}
+.p-mock{background:var(--warn-soft);color:var(--bad)}
+.p-rev{background:var(--good-soft);color:var(--good)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+select,input[type=text],input[type=number],input[type=date],textarea{font:inherit;font-size:.9rem;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:5px 7px;min-width:0}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font:600 .88rem var(--f-body);border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:6px 12px;border-radius:4px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:3px 9px;font-size:.8rem}
+/* subjects */
+.subjects{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.subj{border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.subj header{padding:12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.subj .meta{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.subj ul{list-style:none;margin:0;padding:0}
+.subj li{display:grid;grid-template-columns:1fr repeat(4,26px);gap:4px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line2);font-size:.9rem}
+.subj li.head{font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding-block:4px;background:var(--bg)}
+.subj li.head span{text-align:center}
+.subj li input{justify-self:center}
+.tag{font-size:.7rem;font-weight:700;color:var(--bad);margin-left:4px}
+.tag.lo{color:var(--muted)}
+/* formulas */
+.fgrid{display:grid;grid-template-columns:minmax(160px,1.6fr) repeat(4,1fr);gap:0}
+.fgrid>div{padding:8px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:6px;font-size:.88rem;min-width:0}
+.fgrid>.h{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;border-bottom:1.5px solid var(--ink)}
+.fgrid .d{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.due{color:var(--bad)!important;font-weight:600}
+/* forms */
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;align-items:end;background:var(--bg);padding:12px;border:1px solid var(--line)}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:.75rem;color:var(--muted);font-weight:600}
+.form .wide{grid-column:span 2}
+@media (max-width:520px){.form .wide{grid-column:auto}}
+.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line)}
+.spark{width:100%;height:120px}
+.note{font-size:.85rem;color:var(--muted);max-width:70ch}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:700px){.cols2{grid-template-columns:1fr}}
+.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 4px}
+.del:hover{color:var(--bad)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+/* ---- iPhone / phone layout ---- */
+html{-webkit-text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent}
+.wrap{padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(60px,calc(env(safe-area-inset-bottom,0px) + 40px))}
+@media (max-width:640px){
+  .wrap{gap:14px;padding-top:max(12px,env(safe-area-inset-top,0px))}
+  h1{font-size:1.8rem}
+  .tb .big{font-size:1.25rem}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;padding-top:4px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{white-space:nowrap;padding:10px 12px}
+  .sheet{padding:12px}
+  select,input[type=text],input[type=number],input[type=date],textarea{font-size:16px}
+  input[type=checkbox]{width:22px;height:22px}
+  .btn{padding:9px 13px}
+  .databar .toolbar{width:100%}
+  .databar .btn{flex:1 1 auto}
+  /* daily plan as cards */
+  .plan-table{min-width:0}
+  .plan-table thead{display:none}
+  .plan-table tbody,.plan-table tr,.plan-table td{display:block}
+  .plan-table tr:not(.week){display:grid;grid-template-columns:34px 1fr auto;grid-template-areas:"chk date hrs" "chk task task" "chk side side";column-gap:8px;row-gap:2px;padding:10px 4px;border-bottom:1px solid var(--line)}
+  .plan-table tr:not(.week) td{border:0;padding:0;background:transparent}
+  .plan-table tr.is-today{background:var(--today);border-left:3px solid var(--today-line)}
+  .plan-table td:nth-child(1){grid-area:chk;padding-top:2px}
+  .plan-table td:nth-child(2){grid-area:date}
+  .plan-table td:nth-child(2) br{display:none}
+  .plan-table td:nth-child(3){grid-area:task}
+  .plan-table td:nth-child(4){grid-area:side;font-size:.82rem!important;color:var(--accent)}
+  .plan-table td:nth-child(5){grid-area:hrs}
+  .plan-table tr.week td{position:static}
+  .subjects{grid-template-columns:1fr}
+  .subj li{grid-template-columns:1fr repeat(4,30px)}
+}
+.databar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--paper);border:1px solid var(--line);padding:10px 12px}
+.databar .toolbar{gap:6px}
+.backup-warn{color:var(--warn);font-weight:600}
+.backup-ok{color:var(--good);font-weight:600}
+@media print{
+  .tabs,.databar,.toolbar,.form,.del,#jump-today{display:none!important}
+  body{background:#fff;color:#000}
+  .sheet{border:0;padding:0}
+  [data-panel]{display:flex!important}
+  [data-panel]+[data-panel]{page-break-before:always}
+  tr.week td{background:#eee}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="tb" aria-label="Summary">
+    <div>
+      <span class="label">GATE 2027 · Civil Engineering (CE)</span>
+      <h1>Study Tracker</h1>
+      <span class="sync" id="sync">Loading your progress…</span>
+    </div>
+    <div><span class="label">Days to exam</span><span class="big" id="s-days">–</span><span class="sub">Exam starts 6 Feb 2027</span></div>
+    <div><span class="label">Days done</span><span class="big" id="s-done">–</span><div class="bar"><i id="b-done" style="width:0"></i></div></div>
+    <div><span class="label">Hours logged</span><span class="big" id="s-hrs">–</span><div class="bar"><i id="b-hrs" style="width:0"></i></div></div>
+    <div><span class="label">Topics complete</span><span class="big" id="s-top">–</span><div class="bar"><i id="b-top" style="width:0"></i></div></div>
+  </section>
+
+  <section class="databar" aria-label="Your data">
+    <span id="backup-status" style="font-size:.88rem">Checking backup…</span>
+    <div class="toolbar">
+      <button class="btn" id="btn-export" title="Save all your progress to a .json file">Save backup</button>
+      <button class="btn ghost" id="btn-import" title="Load progress from a backup file">Restore backup</button>
+      <input type="file" id="file-import" accept=".json,application/json" hidden>
+      <button class="btn ghost" id="btn-print">Print</button>
+      <button class="btn ghost" id="btn-theme">Dark mode</button>
+      <button class="btn ghost" id="btn-reset" style="border-color:var(--bad);color:var(--bad)">Reset</button>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Tracker sections">
+    <button role="tab" id="tab-today" data-tab="today" aria-selected="true">Today</button>
+    <button role="tab" id="tab-plan" data-tab="plan" aria-selected="false">Daily plan</button>
+    <button role="tab" id="tab-subj" data-tab="subj" aria-selected="false">Subjects &amp; topics</button>
+    <button role="tab" id="tab-form" data-tab="form" aria-selected="false">Formula revision</button>
+    <button role="tab" id="tab-test" data-tab="test" aria-selected="false">Tests &amp; mocks</button>
+    <button role="tab" id="tab-mist" data-tab="mist" aria-selected="false">Mistake log</button>
+  </nav>
+
+  <!-- TODAY -->
+  <section class="sheet" data-panel="today">
+    <div class="today" id="today-card"></div>
+    <div class="steps" id="today-steps"></div>
+    <div>
+      <h2>The three phases</h2>
+    </div>
+    <div class="phases">
+      <div><b>Phase 1 · Concepts + PYQs</b><span>16 Oct – 5 Jan · one subject at a time, Sunday tests</span></div>
+      <div><b>Phase 2 · Revise + test</b><span>6 – 25 Jan · 2 mocks/week</span></div>
+      <div><b>Phase 3 · Mocks</b><span>26 Jan – 5 Feb</span></div>
+    </div>
+    <div class="cols2">
+      <div>
+        <h3>Rules for the next 16 weeks</h3>
+        <ul class="rules">
+          <li>Tick the day only when all 4 hours are done.</li>
+          <li>Every formula you meet goes into one formula notebook.</li>
+          <li>Every wrong PYQ goes into the mistake log.</li>
+          <li>Behind schedule? Borrow days from Surveying or Construction Mgmt, never from Geotech or Structural.</li>
+          <li>No new books or courses. Your notes, PYQs and one test series are enough.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Before the exam</h3>
+        <ul class="rules">
+          <li>Confirm your GATE registration on gate2027.iitm.ac.in.</li>
+          <li>Buy one test series by the end of December.</li>
+          <li>Check your CE paper date and centre on the admit card (exam runs 6–21 Feb).</li>
+          <li>Start Anki flashcards for Environmental and Transportation values early.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="sheet" data-panel="plan" hidden>
+    <div class="toolbar">
+      <button class="btn" id="jump-today">Jump to today</button>
+      <label class="muted" style="display:flex;gap:6px;align-items:center;font-size:.88rem">Show
+        <select id="plan-filter">
+          <option value="all">All days</option>
+          <option value="pending">Not done yet</option>
+          <option value="p1">Phase 1 only</option>
+          <option value="p2">Phase 2 only</option>
+          <option value="p3">Phase 3 only</option>
+        </select>
+      </label>
+      <span class="note">Each study day: 2 h notes, 1 h PYQs, 30 min side track, 30 min formulas.</span>
+    </div>
+    <div class="tablewrap">
+      <table class="plan-table">
+        <thead><tr><th style="width:36px">Done</th><th style="width:96px">Date</th><th>Main task (3 h)</th><th style="width:220px">Side track (30 min)</th><th style="width:74px">Hours</th></tr></thead>
+        <tbody id="plan-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SUBJECTS -->
+  <section class="sheet" data-panel="subj" hidden>
+    <p class="note">Tick each topic four times: <b>C</b> concept studied, <b>P</b> PYQs solved, <b>R1</b> first revision (January), <b>R2</b> final revision. <span class="tag">★</span> marks high-yield topics. <span class="tag lo">↓</span> marks low-return topics: keep them brief.</p>
+    <div class="subjects" id="subj-grid"></div>
+  </section>
+
+  <!-- FORMULAS -->
+  <section class="sheet" data-panel="form" hidden>
+    <p class="note">After you finish a subject, revise its formula notebook pages on day 1, 3, 7 and 21. Dates in red are due or overdue. Write 10 formulas from memory at the start of every study session.</p>
+    <div class="tablewrap"><div class="fgrid" id="form-grid" style="min-width:560px"></div></div>
+  </section>
+
+  <!-- TESTS -->
+  <section class="sheet" data-panel="test" hidden>
+    <form class="form" id="mock-form">
+      <label>Date<input type="date" id="m-date" required></label>
+      <label>Type<select id="m-type"><option>Full mock</option><option>Sunday subject test</option><option>PYQ paper</option></select></label>
+      <label>Subject / name<input type="text" id="m-name" placeholder="e.g. Soil Mechanics"></label>
+      <label>Score<input type="number" id="m-score" step="0.01" required placeholder="52.33"></label>
+      <label>Out of<input type="number" id="m-max" value="100" step="1" required></label>
+      <label>Silly marks lost<input type="number" id="m-silly" step="0.01" placeholder="6"></label>
+      <label class="wide">Weak areas<input type="text" id="m-notes" placeholder="Consolidation numericals, hydrograph"></label>
+      <button class="btn" type="submit">Add test</button>
+    </form>
+    <div id="mock-chart"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Name</th><th>Score</th><th>%</th><th>Silly</th><th>Weak areas</th><th></th></tr></thead>
+        <tbody id="mock-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MISTAKES -->
+  <section class="sheet" data-panel="mist" hidden>
+    <form class="form" id="mist-form">
+      <label>Subject<select id="x-subj"></select></label>
+      <label class="wide">What went wrong<input type="text" id="x-text" required placeholder="Used total stress instead of effective stress"></label>
+      <label class="wide">Correct idea / fix<input type="text" id="x-fix" placeholder="σ' = σ − u; find u from the water table first"></label>
+      <button class="btn" type="submit">Add mistake</button>
+    </form>
+    <p class="note">Read this whole list every Sunday. Tick a mistake once you have got the same type of question right twice.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:44px">Fixed</th><th style="width:150px">Subject</th><th>Mistake</th><th>Fix</th><th></th></tr></thead>
+        <tbody id="mist-body"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const EXAM = "2027-02-06";
+const BLOCKS = [
+ {id:"som",name:"Engineering Mechanics & Strength of Materials",area:"Structural",w:"6–8",start:"2026-10-16",end:"2026-10-25",topics:[
+  ["Engg Mech: Free body diagrams & equilibrium",0],["Engg Mech: Friction & virtual work",0],["Stress, strain & elastic constants",1],["SFD & BMD",1],["Bending stresses",1],["Shear stresses in beams",0],["Torsion of shafts",0],["Deflection of beams",1],["Principal stresses & Mohr's circle",1],["Theories of failure",0],["Columns & buckling",1],["Thin cylinders & springs",-1]]},
+ {id:"sa",name:"Structural Analysis",area:"Structural",w:"4–6",start:"2026-10-26",end:"2026-11-04",topics:[
+  ["Static & kinematic indeterminacy",1],["Analysis of trusses",1],["Arches & cables",0],["Energy methods (unit load, Castigliano)",1],["Slope-deflection method",1],["Moment distribution method",1],["Influence line diagrams",1],["Matrix methods (stiffness/flexibility basics)",0]]},
+ {id:"rcc",name:"RCC & Steel Design",area:"Structural",w:"6–8",start:"2026-11-05",end:"2026-11-14",topics:[
+  ["RCC: Working stress vs limit state",0],["RCC: Singly & doubly reinforced beams",1],["RCC: Flanged (T/L) beams",0],["RCC: Shear, bond & development length",1],["RCC: One-way & two-way slabs",0],["RCC: Columns",1],["RCC: Footings",0],["Prestressed concrete basics",0],["Steel: Bolted & welded connections",1],["Steel: Tension members",0],["Steel: Compression members",0],["Steel: Plastic analysis",1],["Steel: Beams & plate girder basics",-1]]},
+ {id:"soil",name:"Soil Mechanics",area:"Geotechnical",w:"8–9",start:"2026-11-15",end:"2026-11-24",topics:[
+  ["Phase relations",1],["Index properties & soil classification",1],["Permeability & seepage (flow nets)",1],["Effective stress & capillarity",1],["Compaction",0],["Consolidation",1],["Stress distribution (Boussinesq, Westergaard)",0],["Shear strength & tests",1]]},
+ {id:"fdn",name:"Foundation Engineering",area:"Geotechnical",w:"6–7",start:"2026-11-25",end:"2026-12-01",topics:[
+  ["Sub-surface exploration",-1],["Earth pressure theories",1],["Slope stability",0],["Bearing capacity of shallow foundations",1],["Settlement of foundations",0],["Pile foundations",1]]},
+ {id:"fm",name:"Fluid Mechanics & Hydraulics",area:"Water Resources",w:"6–8",start:"2026-12-02",end:"2026-12-11",topics:[
+  ["Fluid properties & pressure measurement",0],["Hydrostatic forces & buoyancy",0],["Kinematics & Bernoulli's equation",1],["Momentum equation & flow measurement",0],["Dimensional analysis & similitude",1],["Laminar & turbulent flow",0],["Flow through pipes & losses",1],["Boundary layer",-1],["Open channel: uniform & critical flow",1],["Open channel: GVF & hydraulic jump",1],["Hydraulic machines basics",-1]]},
+ {id:"hyd",name:"Hydrology & Irrigation",area:"Water Resources",w:"5–6",start:"2026-12-12",end:"2026-12-18",topics:[
+  ["Precipitation & hydrologic cycle",0],["Evaporation & infiltration",1],["Runoff & unit hydrograph",1],["Flood estimation & routing",0],["Groundwater & well hydraulics",1],["Crop water requirement (duty, delta)",1],["Canal design & sediment theories",-1]]},
+ {id:"env",name:"Environmental Engineering",area:"Environmental",w:"8–10",start:"2026-12-19",end:"2026-12-25",topics:[
+  ["Water demand & population forecasting",0],["Water quality parameters & standards",1],["Water treatment units",1],["Distribution systems",0],["Sewage quantity & sewer design",0],["Wastewater characteristics & BOD",1],["Sewage treatment (ASP, trickling filter)",1],["Air pollution",1],["Solid waste & noise",0]]},
+ {id:"tr",name:"Transportation Engineering",area:"Transportation",w:"8–10",start:"2026-12-26",end:"2027-01-01",topics:[
+  ["Highway alignment & sight distance",1],["Superelevation & horizontal curves",1],["Vertical curves",0],["Highway materials & tests",0],["Flexible pavement design",1],["Rigid pavement design",1],["Traffic flow, capacity & signals",1]]},
+ {id:"sur",name:"Surveying & Construction Management",area:"Geomatics / CM",w:"5–7",start:"2027-01-02",end:"2027-01-05",topics:[
+  ["Levelling & errors",1],["Theodolite, traversing & curves",0],["Remote sensing, GIS & GPS basics",-1],["CPM & PERT",1],["Construction materials basics",0]]},
+];
+const SIDE = [
+ {id:"math",name:"Engineering Mathematics",area:"Side track",w:"11–13",topics:[
+  ["Linear algebra",1],["Calculus",1],["Vector calculus",0],["Ordinary differential equations",1],["Probability & statistics",1],["Numerical methods",1],["Partial differential equations",0]]},
+ {id:"ga",name:"General Aptitude",area:"Side track",w:"15",topics:[
+  ["Verbal ability",1],["Quantitative aptitude",1],["Analytical reasoning",1],["Spatial aptitude",0]]},
+];
+const ALL = BLOCKS.concat(SIDE);
+const MATH_A = ["Linear algebra","Calculus","Vector calculus","Ordinary differential equations"];
+const MATH_B = ["Probability & statistics","Numerical methods","Partial differential equations"];
+const GA = ["Verbal ability","Quantitative aptitude","Analytical reasoning","Spatial aptitude"];
+const REV = ["Revise SOM & Engg Mechanics","Revise Structural Analysis","Revise RCC & Steel","Revise Soil Mechanics","Revise Foundation Engg","Revise Fluid Mechanics","Revise Hydrology & Irrigation","Revise Environmental","Revise Transportation","Revise Surveying & CM","Revise Engineering Maths","Revise Maths (contd.) + GA","Weak areas from mistake log","Weak areas from mistake log"];
+
+const DAYMS = 864e5;
+const D = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const K = dt => dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+const range = (a,b) => { const o=[]; for(let d=D(a); d<=D(b); d.setDate(d.getDate()+1)) o.push(new Date(d)); return o; };
+const addDays = (s,n) => { const d=D(s); d.setDate(d.getDate()+n); return K(d); };
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const fmt = s => { const d=D(s); return d.getDate()+" "+MON[d.getMonth()]; };
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayKey = K(new Date());
+
+/* ---------- build the day plan ---------- */
+const plan = [];
+let sideN = 0;
+const mathDaysA = [], mathDaysB = [];
+BLOCKS.forEach(b => {
+  const days = range(b.start,b.end);
+  const study = days.filter(d=>d.getDay()!==0);
+  const T = b.topics.length, n = study.length;
+  let si = 0, prevLast = -1;
+  days.forEach(d => {
+    const key = K(d);
+    if (d.getDay()===0){
+      plan.push({key,phase:1,kind:"test",block:b.id,title:"Sunday test: "+b.name,detail:"1.5 h test on this week's topics · 1 h formula revision of earlier subjects · read the mistake log",side:"Log test score in Tests & mocks"});
+      return;
+    }
+    const a = Math.floor(si*T/n), z = Math.max(a+1, Math.floor((si+1)*T/n));
+    const names = b.topics.slice(a,z).map(t=>t[0].replace(/^(Engg Mech|RCC|Steel): /,""));
+    const contd = a===prevLast;
+    prevLast = z-1;
+    si++;
+    const isSide = sideN++ % 2 === 0 ? "math" : "ga";
+    const entry = {key,phase:1,kind:"study",block:b.id,title:names.join(" · ")+(contd?" (contd.)":""),detail:(contd?"Finish the topic, then 30 extra PYQs on it":"Read notes → solve PYQs topic-wise → add formulas to notebook")+" · "+b.name,side:"",sideKind:isSide};
+    if (isSide==="math") (key < "2026-12-01" ? mathDaysA : mathDaysB).push(entry);
+    else entry.side = "GA: "+GA[Math.floor(sideN/2)%4]+" practice set";
+    plan.push(entry);
+  });
+});
+[[mathDaysA,MATH_A],[mathDaysB,MATH_B]].forEach(([days,tops])=>{
+  days.forEach((e,i)=>{ e.side = "Maths: "+tops[Math.min(tops.length-1,Math.floor(i*tops.length/days.length))]; });
+});
+let ri = 0;
+range("2027-01-06","2027-01-25").forEach(d=>{
+  const key=K(d), dw=d.getDay();
+  if (dw===0||dw===3) plan.push({key,phase:2,kind:"mock",title:"Full-length mock test (3 h)",detail:"Take it at real exam timing · spend the 4th hour on every wrong and skipped question · update the mistake log",side:"Log score in Tests & mocks"});
+  else plan.push({key,phase:2,kind:"rev",title:REV[ri++ % REV.length],detail:"Formula notebook first → redo your wrong PYQs → 20 fresh PYQs timed",side:"GA practice set + 10 formulas from memory"});
+});
+range("2027-01-26","2027-02-05").forEach((d,i)=>{
+  const key=K(d);
+  if (key==="2027-02-05") plan.push({key,phase:3,kind:"rev",title:"Light revision: formula notebook only",detail:"No new questions · check admit card, centre and documents · sleep early",side:"Rest"});
+  else if (i%2===0) plan.push({key,phase:3,kind:"mock",title:"Full-length mock test (3 h)",detail:"Exam timing, exam conditions · 1 h analysis afterwards",side:"Log score in Tests & mocks"});
+  else plan.push({key,phase:3,kind:"rev",title:"Mock analysis + formula revision",detail:"Revise every formula notebook page · re-read the full mistake log · no new topics",side:"GA quick set (30 min)"});
+});
+const studyPlan = plan.filter(p=>p.kind!=="info");
+
+/* ---------- state ---------- */
+const LS = "gate-ce-2027-tracker";
+const blank = () => ({v:1,days:{},topics:{},formula:{},mocks:[],mistakes:[]});
+let state = blank();
+const norm = o => { const s=blank(); if(o&&typeof o==="object"){ for(const k of ["days","topics","formula"]) if(o[k]&&typeof o[k]==="object") s[k]=JSON.parse(JSON.stringify(o[k])); for(const k of ["mocks","mistakes"]) if(Array.isArray(o[k])) s[k]=JSON.parse(JSON.stringify(o[k])); } return s; };
+try { const raw = localStorage.getItem(LS); if (raw) state = norm(JSON.parse(raw)); } catch(e){}
+const syncEl = document.getElementById("sync");
+let storageOK = true;
+try { localStorage.setItem(LS+"-probe","1"); localStorage.removeItem(LS+"-probe"); } catch(e){ storageOK = false; }
+function setSync(msg){ syncEl.innerHTML = msg; }
+function stamp(){ const d=new Date(); return fmt(K(d))+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function save(){
+  state.savedAt = new Date().toISOString();
+  if (!storageOK){ setSync('<span class="backup-warn">This browser is blocking storage. Use “Save backup” before closing.</span>'); renderBackup(); return; }
+  try { localStorage.setItem(LS, JSON.stringify(state)); setSync("<b>✓ Saved</b> on "+(isIOS?"this iPhone":"this device")+" · "+stamp()); }
+  catch(e){ setSync('<span class="backup-warn">Could not save. Use “Save backup” now.</span>'); }
+  renderBackup();
+}
+/* offline app: cache the app for no-internet use, ask the phone to keep storage */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+function connect(){
+  const where = isIOS ? "this iPhone" : "this device";
+  if (!storageOK) setSync('<span class="backup-warn">This browser is blocking storage. Turn off Private Browsing, or add the app to your Home Screen.</span>');
+  else if (isIOS && !standalone) setSync('<span class="backup-warn">Add to Home Screen</span> for the app version: tap Share <b>⬆︎</b> → “Add to Home Screen”. Safari can clear data from sites you don’t visit for a week; the Home Screen app keeps it.');
+  else setSync("<b>✓ Works offline</b> · progress saves automatically on "+where);
+  renderBackup();
+}
+
+/* ---------- backup / restore ---------- */
+function lastBackup(){ try { return localStorage.getItem(LS+"-backup"); } catch(e){ return null; } }
+function renderBackup(){
+  const el = document.getElementById("backup-status");
+  const lb = lastBackup();
+  if (!lb){ el.innerHTML = '<span class="backup-warn">No backup yet.</span> Save one every Sunday so a browser clean-up can never erase your progress.'; return; }
+  const days = Math.floor((Date.now()-new Date(lb).getTime())/DAYMS);
+  el.innerHTML = days>=7 ? '<span class="backup-warn">Last backup '+days+' days ago.</span> Save a fresh one today.'
+    : '<span class="backup-ok">Backed up</span> '+(days===0?"today":days===1?"yesterday":days+" days ago")+'.';
+}
+document.getElementById("btn-export").onclick = ()=>{
+  const data = JSON.stringify(Object.assign({app:"gate-ce-2027-tracker",exportedAt:new Date().toISOString()},state),null,1);
+  const blob = new Blob([data],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "GATE-CE-backup-"+todayKey+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  try { localStorage.setItem(LS+"-backup", new Date().toISOString()); } catch(e){}
+  renderBackup();
+};
+document.getElementById("btn-import").onclick = ()=>document.getElementById("file-import").click();
+document.getElementById("file-import").onchange = e=>{
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try {
+      const o = JSON.parse(r.result);
+      if (!o || (o.app!=="gate-ce-2027-tracker" && !o.days)) throw new Error("not a tracker backup");
+      if (!confirm("Replace your current progress with the backup from "+(o.exportedAt?fmt(K(new Date(o.exportedAt))):"this file")+"?")) return;
+      state = norm(o); save(); renderAll();
+      alert("Backup restored.");
+    } catch(err){ alert("That file isn't a tracker backup. Choose a file named GATE-CE-backup-….json."); }
+    e.target.value = "";
+  };
+  r.readAsText(f);
+};
+document.getElementById("btn-print").onclick = ()=>window.print();
+document.getElementById("btn-reset").onclick = ()=>{
+  if (!confirm("Erase ALL progress, tests and mistakes on this device? Save a backup first if you might want it.")) return;
+  if (!confirm("Are you sure? This cannot be undone.")) return;
+  state = blank(); save(); renderAll();
+};
+const themeBtn = document.getElementById("btn-theme");
+function applyTheme(t){
+  if (t) document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme");
+  const dark = t ? t==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  themeBtn.textContent = dark ? "Light mode" : "Dark mode";
+}
+let theme = null; try { theme = localStorage.getItem(LS+"-theme"); } catch(e){}
+applyTheme(theme);
+themeBtn.onclick = ()=>{
+  const dark = document.documentElement.getAttribute("data-theme") ? document.documentElement.getAttribute("data-theme")==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  theme = dark ? "light" : "dark"; applyTheme(theme);
+  try { localStorage.setItem(LS+"-theme",theme); } catch(e){}
+};
+window.addEventListener("storage",e=>{ if(e.key===LS && e.newValue){ try{ state=norm(JSON.parse(e.newValue)); renderAll(); }catch(_){} } });
+
+/* ---------- render: summary ---------- */
+function renderSummary(){
+  const left = Math.max(0, Math.ceil((D(EXAM)-D(todayKey))/DAYMS));
+  document.getElementById("s-days").textContent = left;
+  const done = studyPlan.filter(p=>state.days[p.key]&&state.days[p.key].d).length;
+  document.getElementById("s-done").textContent = done+"/"+studyPlan.length;
+  document.getElementById("b-done").style.width = (100*done/studyPlan.length)+"%";
+  const hrs = Object.values(state.days).reduce((a,x)=>a+(+x.h||0),0);
+  const target = studyPlan.length*4;
+  document.getElementById("s-hrs").textContent = hrs+"/"+target;
+  document.getElementById("b-hrs").style.width = Math.min(100,100*hrs/target)+"%";
+  let tot=0, got=0;
+  ALL.forEach(b=>b.topics.forEach((t,i)=>{ tot+=4; const a=state.topics[b.id+"-"+i]||[]; got+=a.filter(Boolean).length; }));
+  document.getElementById("s-top").textContent = Math.round(100*got/tot)+"%";
+  document.getElementById("b-top").style.width = (100*got/tot)+"%";
+}
+
+/* ---------- render: today ---------- */
+const kindPill = k => ({study:'<span class="pill p-study">Study</span>',test:'<span class="pill p-test">Sunday test</span>',mock:'<span class="pill p-mock">Mock</span>',rev:'<span class="pill p-rev">Revision</span>'}[k]||"");
+function renderToday(){
+  const card = document.getElementById("today-card"), steps = document.getElementById("today-steps");
+  let p = plan.find(x=>x.key===todayKey), pre = "";
+  if (!p && todayKey < plan[0].key){ p = plan[0]; pre = "First day · "; }
+  if (!p){ card.innerHTML = '<span class="label">Exam period</span><div class="task">GATE 2027 runs 6–21 Feb. Check your CE paper date on the admit card.</div><div class="muted">Revise only your formula notebook and mistake log until your paper.</div>'; steps.innerHTML=""; return; }
+  const st = state.days[p.key]||{};
+  card.innerHTML = '<div class="toolbar" style="justify-content:space-between"><span class="label">'+pre+DOW[D(p.key).getDay()]+", "+fmt(p.key)+" · Phase "+p.phase+"</span>"+kindPill(p.kind)+'</div>'+
+    '<div class="task">'+esc(p.title)+'</div><div class="muted">'+esc(p.detail)+'</div>'+
+    '<div class="toolbar"><label style="display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" id="today-done" '+(st.d?"checked":"")+'> Mark today done</label>'+
+    '<label class="muted" style="display:flex;gap:6px;align-items:center">Hours studied '+hoursSelect("today-hrs",st.h)+'</label></div>'+
+    '<label class="label" for="today-note">Notes for today (doubts, what you skipped, what to redo)</label>'+
+    '<textarea id="today-note" rows="2" style="width:100%">'+esc(st.n||"")+'</textarea>';
+  let nt; document.getElementById("today-note").oninput = e=>{ clearTimeout(nt); const v=e.target.value; nt=setTimeout(()=>{ state.days[p.key]=Object.assign({},state.days[p.key]||{},{n:v}); save(); renderPlan(); },500); };
+  document.getElementById("today-done").onchange = e=>{ setDay(p.key,{d:e.target.checked}); };
+  document.getElementById("today-hrs").onchange = e=>{ setDay(p.key,{h:+e.target.value}); };
+  const S = p.kind==="study" ? [["0:00–2:00","Concepts","Read your notes on today's topic. Watch a short video only where a concept is unclear."],["2:00–3:00","PYQs","Solve previous year questions on the same topic. Log every wrong one."],["3:00–3:30","Side track",p.side],["3:30–4:00","Formulas","Write 10 formulas from memory, then add today's to the notebook."]]
+    : p.kind==="test" ? [["0:00–1:30","Test","Timed test on this week's topics."],["1:30–2:30","Analysis","Go through every wrong answer. Add to the mistake log."],["2:30–3:30","Formulas","Revise formula pages of all earlier subjects."],["3:30–4:00","Mistakes","Read the full mistake log."]]
+    : p.kind==="mock" ? [["0:00–3:00","Mock","Full paper under exam conditions."],["3:00–3:40","Analysis","Every wrong and skipped question."],["3:40–4:00","Log","Score and weak areas in Tests & mocks."],["Next day","Fix","Revise the weakest area first."]]
+    : [["0:00–1:00","Formulas","Formula notebook pages for today's subject."],["1:00–2:30","Redo","Re-solve the PYQs you got wrong earlier."],["2:30–3:30","Fresh PYQs","20 new questions, timed."],["3:30–4:00","Side",p.side]];
+  steps.innerHTML = S.map(s=>'<div><span class="t">'+s[0]+'</span><b>'+esc(s[1])+'</b><span class="muted" style="font-size:.85rem">'+esc(s[2])+'</span></div>').join("");
+}
+function hoursSelect(id,v){ return '<select id="'+id+'" aria-label="Hours studied">'+[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,6].map(h=>'<option value="'+h+'"'+((+v||0)===h?" selected":"")+'>'+h+'</option>').join("")+'</select>'; }
+function setDay(key,patch){
+  const cur = Object.assign({}, state.days[key]||{}, patch);
+  if (patch.d && !cur.h) cur.h = 4;
+  state.days[key] = cur;
+  save(); renderSummary(); renderToday(); renderPlan();
+}
+
+/* ---------- render: plan ---------- */
+function renderPlan(){
+  const f = document.getElementById("plan-filter").value;
+  const body = document.getElementById("plan-body");
+  let html = "", lastWeek = null, wk = 0;
+  const startMon = D("2026-10-12");
+  plan.forEach(p=>{
+    const st = state.days[p.key]||{};
+    if (f==="pending" && st.d) return;
+    if (f==="p1"&&p.phase!==1 || f==="p2"&&p.phase!==2 || f==="p3"&&p.phase!==3) return;
+    const w = Math.floor((D(p.key)-startMon)/(7*DAYMS))+1;
+    if (w!==lastWeek){ lastWeek=w;
+      const ws = new Date(startMon.getTime()+(w-1)*7*DAYMS), we = new Date(ws.getTime()+6*DAYMS);
+      const wkDays = plan.filter(x=>Math.floor((D(x.key)-startMon)/(7*DAYMS))+1===w);
+      const wkDone = wkDays.filter(x=>state.days[x.key]&&state.days[x.key].d).length;
+      html += '<tr class="week"><td colspan="5">Week '+w+' · '+fmt(K(ws))+' – '+fmt(K(we))+' <span class="muted mono" style="font-size:.8rem;font-weight:400;margin-left:8px">'+wkDone+'/'+wkDays.length+' done</span></td></tr>';
+    }
+    const cls = (p.key===todayKey?"is-today ":"")+(st.d?"is-done":"");
+    html += '<tr class="'+cls+'" id="row-'+p.key+'"><td><input type="checkbox" data-day="'+p.key+'" '+(st.d?"checked":"")+' aria-label="Done '+p.key+'"></td>'+
+      '<td class="date">'+DOW[D(p.key).getDay()]+' <br>'+fmt(p.key)+'</td>'+
+      '<td class="task">'+kindPill(p.kind)+'<b>'+esc(p.title)+'</b><small>'+esc(p.detail)+'</small>'+(st.n?'<small style="color:var(--accent)">📝 '+esc(st.n)+'</small>':'')+'</td>'+
+      '<td style="font-size:.85rem">'+esc(p.side)+'</td>'+
+      '<td>'+hoursSelect("h-"+p.key,st.h).replace('<select ','<select data-hrs="'+p.key+'" ')+'</td></tr>';
+  });
+  body.innerHTML = html || '<tr><td colspan="5" class="empty">Nothing to show for this filter.</td></tr>';
+}
+document.getElementById("plan-body").addEventListener("change",e=>{
+  const t=e.target;
+  if (t.dataset.day) setDay(t.dataset.day,{d:t.checked});
+  else if (t.dataset.hrs) setDay(t.dataset.hrs,{h:+t.value});
+});
+document.getElementById("plan-filter").onchange = renderPlan;
+document.getElementById("jump-today").onclick = ()=>{
+  const sel=document.getElementById("plan-filter"); if(sel.value!=="all"){sel.value="all";renderPlan();}
+  const r = document.getElementById("row-"+todayKey) || document.getElementById("row-"+plan[0].key);
+  if (r) r.scrollIntoView({block:"center",behavior:"smooth"});
+};
+
+/* ---------- render: subjects ---------- */
+function renderSubjects(){
+  document.getElementById("subj-grid").innerHTML = ALL.map(b=>{
+    let got=0;
+    const items = b.topics.map((t,i)=>{
+      const a = state.topics[b.id+"-"+i]||[];
+      got += a.filter(Boolean).length;
+      const tag = t[1]===1?'<span class="tag" title="High-yield">★</span>':t[1]===-1?'<span class="tag lo" title="Low-return, keep brief">↓</span>':"";
+      return '<li><span>'+esc(t[0])+tag+'</span>'+[0,1,2,3].map(j=>'<input type="checkbox" data-t="'+b.id+'-'+i+'" data-j="'+j+'" '+(a[j]?"checked":"")+' aria-label="'+["Concept","PYQs","Revision 1","Revision 2"][j]+': '+esc(t[0])+'">').join("")+'</li>';
+    }).join("");
+    const pct = Math.round(100*got/(b.topics.length*4));
+    const when = b.start ? fmt(b.start)+" – "+fmt(b.end) : "Daily, 30 min";
+    return '<div class="subj"><header><span class="label">'+esc(b.area)+'</span><h3>'+esc(b.name)+'</h3>'+
+      '<div class="meta"><span class="mono">'+when+'</span><span>~'+b.w+' marks</span><span class="mono">'+pct+'%</span></div><div class="bar"><i style="width:'+pct+'%"></i></div></header>'+
+      '<ul><li class="head"><span style="text-align:left">Topic</span><span>C</span><span>P</span><span>R1</span><span>R2</span></li>'+items+'</ul></div>';
+  }).join("");
+}
+document.getElementById("subj-grid").addEventListener("change",e=>{
+  const t=e.target; if(!t.dataset.t) return;
+  const a = (state.topics[t.dataset.t]||[0,0,0,0]).slice(); a[+t.dataset.j] = t.checked?1:0;
+  state.topics[t.dataset.t] = a; save(); renderSummary();
+  const card=t.closest(".subj"); const boxes=card.querySelectorAll("input[type=checkbox]"); const n=[...boxes].filter(x=>x.checked).length;
+  const pct=Math.round(100*n/boxes.length); card.querySelector(".bar i").style.width=pct+"%"; card.querySelectorAll(".meta .mono")[1].textContent=pct+"%";
+});
+
+/* ---------- render: formulas ---------- */
+const GAPS = [1,3,7,21];
+function renderFormulas(){
+  let h = '<div class="h">Subject (finished on)</div>'+GAPS.map(g=>'<div class="h">Day '+g+'</div>').join("");
+  BLOCKS.forEach(b=>{
+    const a = state.formula[b.id]||[];
+    h += '<div><b>'+esc(b.name)+'</b><span class="d">'+fmt(b.end)+'</span></div>';
+    GAPS.forEach((g,j)=>{
+      const due = addDays(b.end,g);
+      const late = !a[j] && due<=todayKey;
+      h += '<div><input type="checkbox" data-f="'+b.id+'" data-j="'+j+'" '+(a[j]?"checked":"")+' aria-label="'+esc(b.name)+' day '+g+' revision"><span class="d'+(late?" due":"")+'">'+fmt(due)+'</span></div>';
+    });
+  });
+  document.getElementById("form-grid").innerHTML = h;
+}
+document.getElementById("form-grid").addEventListener("change",e=>{
+  const t=e.target; if(!t.dataset.f) return;
+  const a=(state.formula[t.dataset.f]||[0,0,0,0]).slice(); a[+t.dataset.j]=t.checked?1:0;
+  state.formula[t.dataset.f]=a; save(); renderFormulas();
+});
+
+/* ---------- render: mocks ---------- */
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function renderMocks(){
+  const rows = state.mocks.slice().sort((a,b)=>a.date<b.date?-1:1);
+  document.getElementById("mock-body").innerHTML = rows.length ? rows.map(m=>{
+    const pct = m.max? Math.round(1000*m.score/m.max)/10 : 0;
+    return '<tr><td class="date">'+fmt(m.date)+'</td><td>'+esc(m.type)+'</td><td>'+esc(m.name)+'</td><td class="mono">'+esc(m.score)+'/'+esc(m.max)+'</td><td class="mono">'+pct+'%</td><td class="mono">'+esc(m.silly||"–")+'</td><td style="font-size:.88rem">'+esc(m.notes)+'</td><td><button class="del" data-delm="'+m.id+'" aria-label="Delete test">×</button></td></tr>';
+  }).join("") : '<tr><td colspan="8" class="empty">No tests logged yet. Your first Sunday test is on 18 Oct.</td></tr>';
+  const pts = rows.filter(m=>m.max>0).map(m=>({d:m.date,p:100*m.score/m.max,full:m.type==="Full mock"}));
+  const box = document.getElementById("mock-chart");
+  if (pts.length<2){ box.innerHTML = '<p class="note">Your score trend appears here after two tests.</p>'; return; }
+  const W=640,H=140,L=34,R=10,T=10,B=24;
+  const x=i=>L+(W-L-R)*i/(pts.length-1), y=p=>T+(H-T-B)*(1-p/100);
+  let s='<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Score trend">';
+  [0,25,50,75,100].forEach(g=>{ s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(g)+'" y2="'+y(g)+'" stroke="var(--line2)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(y(g)+4)+'" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">'+g+'</text>'; });
+  const line = pts.map((p,i)=>(i?"L":"M")+x(i)+" "+y(p.p)).join(" ");
+  s+='<path d="'+line+" L"+x(pts.length-1)+" "+y(0)+" L"+x(0)+" "+y(0)+' Z" fill="var(--accent-soft)" stroke="none"/>';
+  s+='<path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+  pts.forEach((p,i)=>{ s+='<circle cx="'+x(i)+'" cy="'+y(p.p)+'" r="'+(i===pts.length-1?4.5:3)+'" fill="'+(p.full?"var(--bad)":"var(--accent)")+'"/>'; });
+  s+='<text x="'+L+'" y="'+(H-6)+'" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">'+fmt(pts[0].d)+'</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">'+fmt(pts[pts.length-1].d)+'</text></svg>';
+  box.innerHTML = '<div class="label" style="margin-bottom:4px">Score % over time · red dots are full mocks</div>'+s;
+}
+document.getElementById("m-date").value = todayKey;
+document.getElementById("mock-form").addEventListener("submit",e=>{
+  e.preventDefault();
+  const g=id=>document.getElementById(id).value.trim();
+  state.mocks.push({id:uid(),date:g("m-date"),type:g("m-type"),name:g("m-name"),score:+g("m-score"),max:+g("m-max")||100,silly:g("m-silly"),notes:g("m-notes")});
+  ["m-name","m-score","m-silly","m-notes"].forEach(id=>document.getElementById(id).value="");
+  save(); renderMocks();
+});
+document.getElementById("mock-body").addEventListener("click",e=>{
+  const id=e.target.dataset.delm; if(!id) return;
+  state.mocks=state.mocks.filter(m=>m.id!==id); save(); renderMocks();
+});
+
+/* ---------- render: mistakes ---------- */
+document.getElementById("x-subj").innerHTML = ALL.map(b=>'<option>'+esc(b.name)+'</option>').join("");
+function renderMistakes(){
+  const rows=state.mistakes;
+  document.getElementById("mist-body").innerHTML = rows.length ? rows.map(m=>
+    '<tr class="'+(m.ok?"is-done":"")+'"><td><input type="checkbox" data-okx="'+m.id+'" '+(m.ok?"checked":"")+' aria-label="Mark fixed"></td><td style="font-size:.85rem">'+esc(m.subj)+'</td><td class="task">'+esc(m.text)+'</td><td style="font-size:.9rem">'+esc(m.fix)+'</td><td><button class="del" data-delx="'+m.id+'" aria-label="Delete mistake">×</button></td></tr>'
+  ).join("") : '<tr><td colspan="5" class="empty">No mistakes logged yet. Add the first wrong PYQ you hit.</td></tr>';
+}
+document.getElementById("mist-form").addEventListener("submit",e=>{
+  e.preventDefault();
+  const g=id=>document.getElementById(id).value.trim();
+  state.mistakes.unshift({id:uid(),subj:g("x-subj"),text:g("x-text"),fix:g("x-fix"),ok:0});
+  document.getElementById("x-text").value=""; document.getElementById("x-fix").value="";
+  save(); renderMistakes();
+});
+document.getElementById("mist-body").addEventListener("click",e=>{
+  const id=e.target.dataset.delx; if(!id) return;
+  state.mistakes=state.mistakes.filter(m=>m.id!==id); save(); renderMistakes();
+});
+document.getElementById("mist-body").addEventListener("change",e=>{
+  const id=e.target.dataset.okx; if(!id) return;
+  const m=state.mistakes.find(x=>x.id===id); if(m){m.ok=e.target.checked?1:0; save(); renderMistakes();}
+});
+
+/* ---------- tabs ---------- */
+const tabs=[...document.querySelectorAll(".tabs button")];
+function show(name){
+  tabs.forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===name?"true":"false"));
+  document.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==name);
+  try{ localStorage.setItem(LS+"-tab",name); }catch(e){}
+}
+tabs.forEach(b=>b.onclick=()=>show(b.dataset.tab));
+const hashTab = (location.hash||"").slice(1);
+let startTab = "today";
+try{ startTab = localStorage.getItem(LS+"-tab")||"today"; }catch(e){}
+if (tabs.some(b=>b.dataset.tab===hashTab)) startTab = hashTab;
+show(startTab);
+
+function renderAll(){ renderSummary(); renderToday(); renderPlan(); renderSubjects(); renderFormulas(); renderMocks(); renderMistakes(); }
+renderAll();
+connect();
+/* if the app stays open past midnight, move to the new day */
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && K(new Date())!==todayKey) location.reload(); });
+setInterval(()=>{ if(K(new Date())!==todayKey && !document.querySelector("textarea:focus,input:focus")) location.reload(); }, 60000);
+})();
+</script>
+</body>
+</html>
